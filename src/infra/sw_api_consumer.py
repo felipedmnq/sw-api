@@ -3,17 +3,16 @@ from typing import Dict
 from requests import Session
 
 from src.config import SwAPIConfig as Config
-from src.extrac import Extractor
+from src.drivers import HTTPRequester
 
 
 class SwAPIConsumer:
 
     def __init__(self) -> None:
-        self.extractor = Extractor()
-        self.session = self.extractor.create_session()
+        self.requester = HTTPRequester()
 
     def request_starships(self, page: int, session: Session) -> Dict:
 
-        uri = f"{Config.BASE_URI}/starships/{page}"
+        url = f"{Config.BASE_URI}/starships/{page}"
 
-        return session.get(uri)
+        return self.requester.request_data(url)
