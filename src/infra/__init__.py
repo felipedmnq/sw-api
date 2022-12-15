@@ -1,1 +1,1 @@
-from .sw_api_consumer import SwAPIConsumer
+from ..stages.extract.sw_api_extractor import SwAPIExtractor

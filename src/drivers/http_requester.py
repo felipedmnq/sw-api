@@ -1,9 +1,9 @@
 from typing import Dict
 
-from src.interfaces.extractor_interface import Extractor
+from src.interfaces.http_request_interface import HTTPRequestInterface
 
 
-class HTTPRequester(Extractor):
+class HTTPRequester(HTTPRequestInterface):
 
     def __init__(self) -> None:
         self.session = self.create_session()
@@ -11,5 +11,6 @@ class HTTPRequester(Extractor):
     def request_data(self, url: str) -> Dict[str, any]:
 
         response = self.session.get(url)
+        response.raise_for_status()
 
         return response.json()

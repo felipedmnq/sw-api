@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 from src.errors import AbstractMethodError
 
 
-class Extractor(ABC):
+class HTTPRequestInterface(ABC):
 
     def __init__(self) -> None:
         pass

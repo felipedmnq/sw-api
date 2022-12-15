@@ -1,1 +1,1 @@
-from .extractor_interface import Extractor
+from .http_request_interface import HTTPRequestInterface
