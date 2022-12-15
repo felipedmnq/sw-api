@@ -1,9 +1,11 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Tuple
 
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from src.errors import AbstractMethodError
 
 
 class Extractor(ABC):
@@ -37,3 +39,7 @@ class Extractor(ABC):
         session.mount('https://', session_adapter)
 
         return session
+
+    @abstractmethod
+    def request_data(self):
+        raise AbstractMethodError(self.request_data)

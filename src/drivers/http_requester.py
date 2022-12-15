@@ -1,12 +1,12 @@
 from typing import Dict
 
-from .extractor import Extractor
+from src.interfaces.extractor_interface import Extractor
 
 
-class HTTPRequester:
+class HTTPRequester(Extractor):
 
     def __init__(self) -> None:
-        self.session = Extractor().create_session()
+        self.session = self.create_session()
 
     def request_data(self, url: str) -> Dict[str, any]:
 

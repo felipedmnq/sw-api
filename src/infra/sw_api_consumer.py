@@ -11,7 +11,7 @@ class SwAPIConsumer:
     def __init__(self) -> None:
         self.requester = HTTPRequester()
 
-    def request_starships(self, page: int, session: Session) -> Dict:
+    def request_starships(self, page: int) -> Dict:
 
         url = f"{Config.BASE_URI}/starships/{page}"
 
