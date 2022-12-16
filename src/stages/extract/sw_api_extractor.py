@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Dict, List
 
@@ -17,21 +18,24 @@ class SwAPIExtractor:
         url = f"{Config.BASE_URI}/starships/{page}/"
         try:
             raw_data = ExtractContract(
+                QUERY_ID=str(uuid.uuid4()),
                 EXTRACT_DATETIME=str(datetime.today()),
-                RAW_DATA=self.requester.request_data(url),
+                PAGE=page,
+                RAW_DATA=self.requester.request_data(url)["result"],
             )
         except Exception as e:
             raise ExtractError(str(e))
 
         return raw_data
 
-    def extract_starships(self, pages: List[int]):
+    def extract_starships(self, pages: List[ExtractContract]):
 
         results_list = []
         for page in pages:
             try:
                 results_list.append(self.request_starships_by_page(page))
             except:
+                ## INSERT A LOG INFORMATION HERE
                 print(f"\033[91mNot possible to retrieve data from page {page}\033[0m")
                 continue
 
