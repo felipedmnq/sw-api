@@ -1,5 +1,6 @@
 import pandas as pd
 
+from src.config import SwAPIConfig as Config
 from src.drivers.mocks import mock_extractor_list
 
 from .transform_raw import TransformRaw
@@ -12,5 +13,4 @@ def test_transform():
 
     assert isinstance(df1, pd.DataFrame)
     assert isinstance(df2, pd.DataFrame)
-
-
+    assert list(df2.columns) == Config.FILTER_COLS

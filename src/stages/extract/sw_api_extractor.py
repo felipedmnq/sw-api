@@ -39,6 +39,4 @@ class SwAPIExtractor:
                 print(f"\033[91mNot possible to retrieve data from page {page}\033[0m")
                 continue
 
-        print(f"\033[92m{results_list}\033[0m")
-
         return results_list

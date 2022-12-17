@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 
 from src.config import SwAPIConfig as Config
@@ -23,11 +24,38 @@ class TransformRaw:
 
         return {
             key: value for key, value in starship_properties.items()
-            if key in Config.TABLE_SCHEMA.keys()
+            if key in Config.FILTER_COLS
         }
 
     def __create_dataframe(self, data_list: List[Dict[str, any]]) -> pd.DataFrame:
         return pd.DataFrame(data_list)
+
+    def __cast_dtypes(self, df: pd.DataFrame, schema_config: Dict[str, any]) -> pd.DataFrame:
+        df = df.astype({
+            key: value for key, value in schema_config.items()
+            if key in df.columns
+        })
+
+        return df
+
+    def __replace_nan(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.replace(['None', 'nan', ' ', 'n/a'], np.nan)
+
+    def __split_crew(self, df: pd.DataFrame) -> pd.DataFrame:
+        if "crew" in df.columns:
+            df["crew"] = df["crew"].apply(lambda cell: cell.split("-")[-1] if "-" in cell else cell)
+
+        return df
+
+    def __replace_coma(self, df: pd.DataFrame) -> pd.DataFrame:
+        if "crew" in df.columns:
+            df["crew"] = df["crew"].apply(lambda cell: cell.replace(",", "") if "," in cell else cell)
+        
+        if "length" in df.columns:
+            df["length"] = df["length"].apply(lambda cell: cell.replace(",", ".") if "," in cell else cell)
+
+        return df
+
 
     def __filter_and_transform(
         self,
@@ -42,11 +70,16 @@ class TransformRaw:
             results.append(self.__extract_starship_data(starship))
 
         metadata_df = self.__create_dataframe(metadata)
+
         starships_df = self.__create_dataframe(results)
-        starships_df = starships_df[list(Config.TABLE_SCHEMA.keys())[2:]]
-            
-        print(f"\033[91m{metadata_df}\033[0m")
-        print(f"\033[96m{starships_df}\033[0m")
+        starships_df = self.__replace_coma(starships_df)
+        starships_df = self.__split_crew(starships_df)
+
+        schema_config = Config.TABLE_SCHEMA
+
+        starships_df = starships_df[list(schema_config.keys())[2:]]
+        starships_df = self.__replace_nan(starships_df)
+        starships_df = self.__cast_dtypes(starships_df, schema_config)
 
         return metadata_df, starships_df
 
