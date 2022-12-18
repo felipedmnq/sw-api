@@ -8,8 +8,15 @@ import pandas as pd
 class SwAPIConfig:
 
     BASE_URI: str = "https://www.swapi.tech/api"
-    DATE_FORMAT: str = '%Y-%m-%d'
+    GCP_PROJECT_ID = "light-reality-344611"
+    SW_GCP_SERVICE_ACCOUNT = "SW_GCP_SERVICE_ACCOUNT"
+    DATE_FORMAT: str = "%Y-%m-%d"
     BIGQUERY_PROJECT: str = None
+    TIME_FORMAT: str = "%H%M%S%f"
+    GCS_BUCKET = "datalake-felipedmnq"
+    RAW_DATA_FILE_NAME: str = "raw_sw_api"
+    GCS_DUMP_DIR = "sw_api/raw_data"
+    GCS_MAX_ITERATIONS = 3
 
     FILTER_COLS = [
         "model", "name", "starship_class", "manufacturer", "length", 
@@ -26,7 +33,6 @@ class SwAPIConfig:
         "manufacturer": str,
         "length": float,
         "crew": pd.Int64Dtype(),
-        # "max_crew": pd.Int64Dtype(),
         "passengers": pd.Int64Dtype(),
         "max_atmosphering_speed": pd.Int64Dtype(),
         "hyperdrive_rating": float,

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import SwAPIConfig as Config
+from src.infra import CloudStorage, get_env_variable
 from src.stages.contracts import ExtractContract
 
 
@@ -62,12 +63,20 @@ class TransformRaw:
         starships_list: List[ExtractContract]
     ) -> List[Dict[str, any]]:
 
+        gcs = CloudStorage(
+            Config.GCS_BUCKET, get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT)
+        )
+
         metadata = []
         results = []
+        results_dict = {"results": results}
 
         for starship in starships_list:
             metadata.append(self.__extract_metadata(starship))
             results.append(self.__extract_starship_data(starship))
+
+        raw_data = {"metadata": metadata, "sw_data": results}
+        gcs.dump_to_gcs_bucket(results)
 
         metadata_df = self.__create_dataframe(metadata)
 
