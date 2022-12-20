@@ -3,8 +3,7 @@ import pandas as pd
 from src.config import SwAPIConfig as Config
 from src.drivers.mocks import mock_extractor_list
 from src.errors import TransformError
-from src.stages.contracts import (TransformContractBigQuery,
-                                  TransformContractGCS)
+from src.stages.contracts import TransformContractBigQuery
 
 from .transform_raw import TransformRaw
 

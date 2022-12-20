@@ -12,6 +12,7 @@ class SwAPIConfig:
     SW_GCP_SERVICE_ACCOUNT = "SW_GCP_SERVICE_ACCOUNT"
     DATE_FORMAT: str = "%Y-%m-%d"
     BIGQUERY_PROJECT: str = None
+    BIGQUERY_DATASET = "sw_api"
     TIME_FORMAT: str = "%H%M%S%f"
     GCS_BUCKET = "datalake-felipedmnq"
     RAW_DATA_FILE_NAME: str = "raw_sw_api"

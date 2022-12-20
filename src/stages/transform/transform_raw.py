@@ -5,7 +5,7 @@ import pandas as pd
 
 from src.config import SwAPIConfig as Config
 from src.errors import TransformError
-from src.infra import CloudStorage, get_env_variable
+from src.infra import BigQuery, CloudStorage, get_env_variable
 from src.stages.contracts import (ExtractContract, TransformContractBigQuery,
                                   TransformContractGCS)
 
@@ -71,6 +71,11 @@ class TransformRaw:
         gcs = CloudStorage(
             Config.GCS_BUCKET, get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT)
         )
+
+        bq = BigQuery(get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT))
+        
+        print(f"\033[91m{bq.list_dataset_tables(Config.BIGQUERY_DATASET)}\033[0m")
+
         bq_metadata_contract = TransformContractBigQuery()
         bq_data_contract = TransformContractBigQuery()
 
