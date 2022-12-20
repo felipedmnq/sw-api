@@ -7,6 +7,7 @@ from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
 
 from src.config import SwAPIConfig as Config
+from src.stages.contracts import TransformContractGCS
 
 
 class CloudStorage:
@@ -29,7 +30,7 @@ class CloudStorage:
 
         return json.dumps(obj, indent=4, allow_nan=True)
 
-    def __create_file_path(self) -> str:
+    def __create_file_path(self, metadata: bool = False) -> str:
         path = Config.GCS_DUMP_DIR
         base_name = Config.RAW_DATA_FILE_NAME
         file_ext = ".json"
@@ -39,10 +40,17 @@ class CloudStorage:
         current_date = current_datetime.strftime(format=Config.DATE_FORMAT)
 
         filename = "_".join([base_name, current_date, current_time]) + file_ext
+        if metadata:
+            return f"{path}/{current_date}/metadata/{filename}"
 
-        return f"{path}/{current_date}/{filename}"
+        return f"{path}/{current_date}/raw_data/{filename}"
 
-    def __dump_data(self, gcs_path: str, file_object: any, timeout: int) -> None:
+    def __dump_data(
+        self,
+        gcs_path: str,
+        file_object: TransformContractGCS,
+        timeout: int
+    ) -> None:
 
         bucket = self.__get_bucket()
         blob = bucket.blob(gcs_path)
@@ -50,7 +58,10 @@ class CloudStorage:
         blob.upload_from_string(file_object, timeout=timeout)
 
     def __dump_to_gcs(
-        self, file_object, gcs_path: str, timeout: int = 60,
+        self,
+        file_object: TransformContractGCS,
+        gcs_path: str,
+        timeout: int = 60,
         max_iterations: int = Config.GCS_MAX_ITERATIONS
     ) -> None:
         iterations = 0
@@ -65,10 +76,10 @@ class CloudStorage:
                 pass ## CREATE AN CUSTOM ERROR
 
     def dump_to_gcs_bucket(
-        self, file_object, timeout: int = 60
+        self, file_object, timeout: int = 60, metadata=False
     ) -> None:
 
         file_object = self.__to_json(file_object)
-        gcs_dump_path = self.__create_file_path()
+        gcs_dump_path = self.__create_file_path(metadata)
 
         self.__dump_to_gcs(file_object, gcs_dump_path, timeout)

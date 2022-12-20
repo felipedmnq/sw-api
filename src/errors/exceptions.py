@@ -19,4 +19,11 @@ class ExtractError(ExceptionsTemplate):
     def __init__(self, message) -> None:
         self.message = f"[ERROR] Extract data failed: {message}"
         super().__init__(self.message)
+
+
+class TransformError(ExceptionsTemplate):
+
+    def __init__(self, message) -> None:
+        self.message = f"[ERROR] Transform data failed: {message}"
+        super().__init__(self.message)
         
