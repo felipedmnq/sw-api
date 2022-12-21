@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 
 import numpy as np
@@ -13,11 +14,25 @@ class SwAPIConfig:
     DATE_FORMAT: str = "%Y-%m-%d"
     BIGQUERY_PROJECT: str = None
     BIGQUERY_DATASET = "sw_api"
+    TABLE_NAME = "sw_api_table"
     TIME_FORMAT: str = "%H%M%S%f"
     GCS_BUCKET = "datalake-felipedmnq"
     RAW_DATA_FILE_NAME: str = "raw_sw_api"
     GCS_DUMP_DIR = "sw_api/raw_data"
     GCS_MAX_ITERATIONS = 3
+
+    BQ_FIELD_TYPES_MAP = {
+        str: 'STRING',
+        bytes: 'BYTES',
+        int: 'INTEGER',
+        float: 'FLOAT',
+        bool: 'BOOLEAN',
+        pd.Int64Dtype(): 'INTEGER',
+        datetime.datetime: 'DATETIME',
+        datetime.date: 'DATE',
+        datetime.time: 'TIME',
+        np.datetime64: 'DATETIME',
+        np.timedelta64: 'TIME'}
 
     FILTER_COLS = [
         "model", "name", "starship_class", "manufacturer", "length", 

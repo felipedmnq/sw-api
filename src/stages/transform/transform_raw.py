@@ -73,7 +73,7 @@ class TransformRaw:
         )
 
         bq = BigQuery(get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT))
-        
+
         print(f"\033[91m{bq.list_dataset_tables(Config.BIGQUERY_DATASET)}\033[0m")
 
         bq_metadata_contract = TransformContractBigQuery()
@@ -102,6 +102,8 @@ class TransformRaw:
         starships_df = self.__cast_dtypes(starships_df, schema_config)
         bq_metadata_contract.BQ_LOAD_CONTENT = metadata_df
         bq_data_contract.BQ_LOAD_CONTENT = starships_df
+
+        bq.insert_df(starships_df, Config.BIGQUERY_DATASET, Config.TABLE_NAME, Config.TABLE_SCHEMA)
 
         return bq_metadata_contract, bq_data_contract
 
