@@ -22,16 +22,21 @@ class TransformRaw:
         return {
                 "query_id": starship_data.QUERY_ID,
                 "extract_date": starship_data.EXTRACT_DATETIME,
-                "page": starship_data.PAGE
+                "page": int(starship_data.PAGE)
             }
 
     def __extract_starship_data(self, starship_data: ExtractContract) -> Dict[str, any]:
         starship_properties = starship_data.RAW_DATA["properties"]
 
-        return {
+        data_dict = {
             key: value for key, value in starship_properties.items()
             if key in Config.FILTER_COLS
         }
+        
+        data_dict["query_id"] = starship_data.QUERY_ID
+        data_dict["processing_timestamp"] = starship_data.EXTRACT_DATETIME
+
+        return data_dict
 
     def __create_dataframe(self, data_list: List[Dict[str, any]]) -> pd.DataFrame:
         return pd.DataFrame(data_list)
@@ -45,7 +50,9 @@ class TransformRaw:
         return df
 
     def __replace_nan(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.replace(['None', 'nan', ' ', 'n/a'], np.nan)
+        return df.replace(
+            ["unknown", "None", "nan", " ", "", "n/a"], np.nan
+        )
 
     def __split_crew(self, df: pd.DataFrame) -> pd.DataFrame:
         if "crew" in df.columns:
@@ -53,15 +60,19 @@ class TransformRaw:
 
         return df
 
-    def __replace_coma(self, df: pd.DataFrame) -> pd.DataFrame:
-        if "crew" in df.columns:
-            df["crew"] = df["crew"].apply(lambda cell: cell.replace(",", "") if "," in cell else cell)
-        
-        if "length" in df.columns:
-            df["length"] = df["length"].apply(lambda cell: cell.replace(",", ".") if "," in cell else cell)
+    def __replace_coma(
+        self,
+        df: pd.DataFrame,
+        schema: Dict[str, any]
+    ) -> pd.DataFrame:
+        for col, dtype in schema.items():
+            if dtype == float:
+                df[col] = df[col].apply(lambda cell: cell.replace(",", "."))
+            elif dtype == pd.Int64Dtype():
+                df[col] = df[col].apply(lambda cell: cell.replace(",", ""))
+                df[col] = df[col].apply(lambda x: ''.join([n for n in x if n.isdigit()]))
 
         return df
-
 
     def __filter_and_transform(
         self,
@@ -74,36 +85,37 @@ class TransformRaw:
 
         bq = BigQuery(get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT))
 
-        print(f"\033[91m{bq.list_dataset_tables(Config.BIGQUERY_DATASET)}\033[0m")
-
         bq_metadata_contract = TransformContractBigQuery()
         bq_data_contract = TransformContractBigQuery()
 
         metadata_contract = TransformContractGCS()
         results_contract = TransformContractGCS()
 
+        schema_config = Config.TABLE_SCHEMA
+
         for starship in starships_list:
             metadata_contract.GCS_RAW_LOAD_CONTENT.append(self.__extract_metadata(starship))
             results_contract.GCS_RAW_LOAD_CONTENT.append(self.__extract_starship_data(starship))
+
 
         gcs.dump_to_gcs_bucket(results_contract.GCS_RAW_LOAD_CONTENT)
         gcs.dump_to_gcs_bucket(metadata_contract.GCS_RAW_LOAD_CONTENT, metadata=True)
 
         metadata_df = self.__create_dataframe(metadata_contract.GCS_RAW_LOAD_CONTENT)
-
         starships_df = self.__create_dataframe(results_contract.GCS_RAW_LOAD_CONTENT)
-        starships_df = self.__replace_coma(starships_df)
         starships_df = self.__split_crew(starships_df)
-
-        schema_config = Config.TABLE_SCHEMA
-
-        starships_df = starships_df[list(schema_config.keys())[2:]]
+        starships_df = self.__replace_coma(starships_df, schema_config)
+        starships_df = starships_df[list(schema_config.keys())]
         starships_df = self.__replace_nan(starships_df)
+        metadata_df = self.__cast_dtypes(metadata_df, Config.METADATA_SCHEMA)
         starships_df = self.__cast_dtypes(starships_df, schema_config)
+        
         bq_metadata_contract.BQ_LOAD_CONTENT = metadata_df
         bq_data_contract.BQ_LOAD_CONTENT = starships_df
+        
 
         bq.insert_df(starships_df, Config.BIGQUERY_DATASET, Config.TABLE_NAME, Config.TABLE_SCHEMA)
+        bq.insert_df(metadata_df, Config.BIGQUERY_DATASET, Config.METADATA_TABLE, Config.METADATA_SCHEMA)
 
         return bq_metadata_contract, bq_data_contract
 

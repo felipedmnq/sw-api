@@ -15,6 +15,7 @@ class SwAPIConfig:
     BIGQUERY_PROJECT: str = None
     BIGQUERY_DATASET = "sw_api"
     TABLE_NAME = "sw_api_table"
+    METADATA_TABLE = "sw_api_metadata"
     TIME_FORMAT: str = "%H%M%S%f"
     GCS_BUCKET = "datalake-felipedmnq"
     RAW_DATA_FILE_NAME: str = "raw_sw_api"
@@ -35,10 +36,16 @@ class SwAPIConfig:
         np.timedelta64: 'TIME'}
 
     FILTER_COLS = [
-        "model", "name", "starship_class", "manufacturer", "length", 
-        "crew", "passengers", "max_atmosphering_speed", "hyperdrive_rating",
-        "cargo_capacity"
+        "query_id", "processing_timestamp", "model", "name", "starship_class",
+        "manufacturer", "length", "crew", "passengers", "max_atmosphering_speed",
+        "hyperdrive_rating", "cargo_capacity"
     ]
+
+    METADATA_SCHEMA = {
+        "query_id": str,
+        "extract_date": np.datetime64,
+        "page": pd.Int64Dtype()
+    }
 
     TABLE_SCHEMA = {
         "query_id": str,
