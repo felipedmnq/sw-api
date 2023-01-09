@@ -5,7 +5,8 @@ import pandas as pd
 
 from src.config import SwAPIConfig as Config
 from src.errors import TransformError
-from src.infra import BigQuery, CloudStorage, get_env_variable
+from src.infra import get_env_variable
+from src.stages import BigQueryLoader, GCSLoader
 from src.stages.contracts import (ExtractContract, TransformContractBigQuery,
                                   TransformContractGCS)
 
@@ -71,6 +72,7 @@ class TransformRaw:
             elif dtype == pd.Int64Dtype():
                 df[col] = df[col].apply(lambda cell: cell.replace(",", ""))
                 df[col] = df[col].apply(lambda x: ''.join([n for n in x if n.isdigit()]))
+                # df[col] = df[col].apply(lambda x: ''.join([n for n in x if n.isdigit()]) if not x.isdigit() else x0)
 
         return df
 
@@ -79,11 +81,9 @@ class TransformRaw:
         starships_list: List[ExtractContract]
     ) -> List[Dict[str, any]]:
 
-        gcs = CloudStorage(
-            Config.GCS_BUCKET, get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT)
-        )
+        gcs_loader = GCSLoader()
 
-        bq = BigQuery(get_env_variable(Config.SW_GCP_SERVICE_ACCOUNT))
+        bq_loader = BigQueryLoader()
 
         bq_metadata_contract = TransformContractBigQuery()
         bq_data_contract = TransformContractBigQuery()
@@ -98,8 +98,8 @@ class TransformRaw:
             results_contract.GCS_RAW_LOAD_CONTENT.append(self.__extract_starship_data(starship))
 
 
-        gcs.dump_to_gcs_bucket(results_contract.GCS_RAW_LOAD_CONTENT)
-        gcs.dump_to_gcs_bucket(metadata_contract.GCS_RAW_LOAD_CONTENT, metadata=True)
+        gcs_loader.load_data(results_contract)
+        gcs_loader.load_data(metadata_contract, metadata=True)
 
         metadata_df = self.__create_dataframe(metadata_contract.GCS_RAW_LOAD_CONTENT)
         starships_df = self.__create_dataframe(results_contract.GCS_RAW_LOAD_CONTENT)
@@ -114,8 +114,18 @@ class TransformRaw:
         bq_data_contract.BQ_LOAD_CONTENT = starships_df
         
 
-        bq.insert_df(starships_df, Config.BIGQUERY_DATASET, Config.TABLE_NAME, Config.TABLE_SCHEMA)
-        bq.insert_df(metadata_df, Config.BIGQUERY_DATASET, Config.METADATA_TABLE, Config.METADATA_SCHEMA)
+        bq_loader.load_data(
+            bq_data_contract,
+            Config.BIGQUERY_DATASET,
+            Config.TABLE_NAME,
+            Config.TABLE_SCHEMA
+        )
+        bq_loader.load_data(
+            bq_metadata_contract,
+            Config.BIGQUERY_DATASET,
+            Config.METADATA_TABLE,
+            Config.METADATA_SCHEMA
+        )
 
         return bq_metadata_contract, bq_data_contract
 

@@ -76,7 +76,7 @@ class CloudStorage:
                 pass ## CREATE AN CUSTOM ERROR
 
     def dump_to_gcs_bucket(
-        self, file_object, timeout: int = 60, metadata=False
+        self, file_object, metadata: bool = False, timeout: int = 60
     ) -> None:
 
         file_object = self.__to_json(file_object)

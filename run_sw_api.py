@@ -9,7 +9,7 @@ if __name__=="__main__":
     api_consumer = SwAPIExtractor(http_requester)
     tranformer = TransformRaw()
     
-    pages = [page for page in range(1, 40)]
+    pages = [page for page in range(1, 10)]
     # print(f"\033[91m{pages}\033[0m")
 
     starships_list = api_consumer.extract_starships(pages)
